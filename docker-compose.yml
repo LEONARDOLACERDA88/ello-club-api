@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ello_pg
+    environment:
+      POSTGRES_USER: ello_user
+      POSTGRES_PASSWORD: ello_pass
+      POSTGRES_DB: ello_club
+    ports:
+      - '5433:5432'
+    volumes:
+      - ello_pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ello_user -d ello_club']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ello_redis
+    ports:
+      - '6380:6379'
+    restart: unless-stopped
+
+volumes:
+  ello_pg_data:

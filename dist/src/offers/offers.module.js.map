@@ -1,0 +1,1 @@
+{"version":3,"file":"offers.module.js","sourceRoot":"","sources":["../../../src/offers/offers.module.ts"],"names":[],"mappings":";;;;;;;;;AAAA,2CAAuC;AACvC,qDAAgD;AAChD,2DAAsD;AACtD,0DAAqD;AAM9C,IAAM,YAAY,GAAlB,MAAM,YAAY;CAAG,CAAA;AAAf,oCAAY;uBAAZ,YAAY;IAJxB,IAAA,eAAM,EAAC;QACN,SAAS,EAAE,CAAC,8BAAa,EAAE,4BAAY,CAAC;QACxC,WAAW,EAAE,CAAC,oCAAgB,CAAC;KAChC,CAAC;GACW,YAAY,CAAG"}

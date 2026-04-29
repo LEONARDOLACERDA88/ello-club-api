@@ -1,0 +1,340 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── USUÁRIOS ────────────────────────────────────────────────────────────────
+
+model User {
+  id            String     @id @default(uuid())
+  name          String
+  email         String     @unique
+  passwordHash  String
+  phone         String?
+  cpfEncrypted  String?
+  points        Int        @default(1000)
+  totalSavings  Decimal    @default(0) @db.Decimal(10, 2)
+  level         UserLevel  @default(CLASSIC)
+  status        UserStatus @default(ACTIVE)
+  mfaEnabled    Boolean    @default(false)
+  mfaSecret     String?
+
+  // LGPD
+  lgpdConsentAt      DateTime?
+  lgpdConsentIp      String?
+  lgpdConsentVersion String?
+  marketingConsent   Boolean   @default(false)
+  deletedAt          DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites     UserFavorite[]
+  transactions  Transaction[]
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+
+  @@index([email])
+  @@index([status])
+  @@map("users")
+}
+
+enum UserLevel {
+  CLASSIC
+  SILVER
+  GOLD
+  DIAMOND
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+// ─── REFRESH TOKENS ──────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// ─── PARCEIROS ───────────────────────────────────────────────────────────────
+
+model Partner {
+  id             String        @id @default(uuid())
+  name           String
+  email          String        @unique
+  passwordHash   String
+  cnpj           String        @unique
+  category       String
+  logo           String?
+  description    String?
+  website        String?
+  phone          String?
+  status         PartnerStatus @default(PENDING)
+  commissionRate Decimal       @default(10) @db.Decimal(5, 2)
+  apiKeyHash     String?       @unique
+
+  contractSignedAt    DateTime?
+  contractVersion     String?
+  contractDocumentUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses    PartnerAddress[]
+  offers       Offer[]
+  transactions Transaction[]
+  commissions  Commission[]
+  webhooks     PartnerWebhook[]
+
+  @@index([status])
+  @@index([category])
+  @@map("partners")
+}
+
+enum PartnerStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+model PartnerAddress {
+  id        String  @id @default(uuid())
+  partnerId String
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  street    String
+  city      String
+  state     String
+  zipCode   String
+  lat       Decimal? @db.Decimal(9, 6)
+  lng       Decimal? @db.Decimal(9, 6)
+
+  @@map("partner_addresses")
+}
+
+model PartnerWebhook {
+  id        String   @id @default(uuid())
+  partnerId String
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  url       String
+  secret    String
+  events    String[]
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("partner_webhooks")
+}
+
+// ─── ADMINS ──────────────────────────────────────────────────────────────────
+
+model Admin {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         AdminRole @default(OPERATOR)
+  createdAt    DateTime  @default(now())
+
+  @@map("admins")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  OPERATOR
+  FINANCE
+}
+
+// ─── OFERTAS ─────────────────────────────────────────────────────────────────
+
+model Offer {
+  id                 String      @id @default(uuid())
+  partnerId          String
+  partner            Partner     @relation(fields: [partnerId], references: [id])
+  title              String
+  description        String
+  category           String
+  discount           Int
+  originalPrice      Decimal     @db.Decimal(10, 2)
+  finalPrice         Decimal     @db.Decimal(10, 2)
+  pointsRequired     Int         @default(0)
+  rating             Decimal     @default(0) @db.Decimal(3, 2)
+  ratingCount        Int         @default(0)
+  image              String?
+  status             OfferStatus @default(ACTIVE)
+  maxRedemptions     Int?
+  currentRedemptions Int         @default(0)
+  validFrom          DateTime    @default(now())
+  validUntil         DateTime?
+  restrictions       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites    UserFavorite[]
+  transactions Transaction[]
+
+  @@index([partnerId])
+  @@index([category])
+  @@index([status])
+  @@map("offers")
+}
+
+enum OfferStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  EXPIRED
+}
+
+// ─── FAVORITOS ───────────────────────────────────────────────────────────────
+
+model UserFavorite {
+  userId    String
+  offerId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer     Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, offerId])
+  @@map("user_favorites")
+}
+
+// ─── TRANSAÇÕES ──────────────────────────────────────────────────────────────
+
+model Transaction {
+  id            String            @id @default(uuid())
+  userId        String
+  offerId       String
+  partnerId     String
+  user          User              @relation(fields: [userId], references: [id])
+  offer         Offer             @relation(fields: [offerId], references: [id])
+  partner       Partner           @relation(fields: [partnerId], references: [id])
+  code          String            @unique
+  status        TransactionStatus @default(PENDING)
+  pointsUsed    Int               @default(0)
+  discount      Int
+  originalPrice Decimal           @db.Decimal(10, 2)
+  finalAmount   Decimal           @db.Decimal(10, 2)
+  savingsAmount Decimal           @db.Decimal(10, 2)
+  validatedAt   DateTime?
+  expiresAt     DateTime
+  createdAt     DateTime          @default(now())
+
+  commission Commission?
+
+  @@index([userId])
+  @@index([partnerId])
+  @@index([code])
+  @@index([status])
+  @@map("transactions")
+}
+
+enum TransactionStatus {
+  PENDING
+  VALIDATED
+  EXPIRED
+  CANCELLED
+}
+
+// ─── COMISSÕES ───────────────────────────────────────────────────────────────
+
+model Commission {
+  id            String           @id @default(uuid())
+  transactionId String           @unique
+  transaction   Transaction      @relation(fields: [transactionId], references: [id])
+  partnerId     String
+  partner       Partner          @relation(fields: [partnerId], references: [id])
+  amount        Decimal          @db.Decimal(10, 2)
+  percentage    Decimal          @db.Decimal(5, 2)
+  status        CommissionStatus @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime         @default(now())
+
+  @@index([partnerId])
+  @@index([status])
+  @@map("commissions")
+}
+
+enum CommissionStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+// ─── LGPD ────────────────────────────────────────────────────────────────────
+
+model LgpdRequest {
+  id          String          @id @default(uuid())
+  userId      String
+  type        LgpdRequestType
+  status      String          @default("pending")
+  requestedAt DateTime        @default(now())
+  processedAt DateTime?
+  notes       String?
+
+  @@index([userId])
+  @@map("lgpd_requests")
+}
+
+enum LgpdRequestType {
+  DATA_EXPORT
+  DATA_DELETION
+  DATA_CORRECTION
+  CONSENT_REVOKE
+}
+
+// ─── AUDIT LOG ───────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String?
+  entityId  String?
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── NOTIFICAÇÕES ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String
+  read      Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@map("notifications")
+}

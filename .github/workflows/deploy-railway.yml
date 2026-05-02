@@ -4,20 +4,48 @@ on:
   push:
     branches: [main]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: leonardolacerda88/ello-club-api
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy to Railway
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/leonardolacerda88/ello-club-api:latest
+
+      - name: Deploy image to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway up \
-            --service 84feedbb-66fa-45a3-851b-a0b514f3fca0 \
-            --environment production \
-            --detach
+          curl -s -X POST https://backboard.railway.app/graphql/v2 \
+            -H "Authorization: Bearer $RAILWAY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "mutation { serviceInstanceUpdate(environmentId: \"024fead7-0227-4efb-a393-3d968d640264\", serviceId: \"84feedbb-66fa-45a3-851b-a0b514f3fca0\", input: { source: { image: \"ghcr.io/leonardolacerda88/ello-club-api:latest\" } }) }"
+            }' | cat
+
+          curl -s -X POST https://backboard.railway.app/graphql/v2 \
+            -H "Authorization: Bearer $RAILWAY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "mutation { serviceInstanceDeploy(environmentId: \"024fead7-0227-4efb-a393-3d968d640264\", serviceId: \"84feedbb-66fa-45a3-851b-a0b514f3fca0\") }"
+            }' | cat

@@ -26,6 +26,11 @@ async function bootstrap() {
     transform: true,
   }))
 
+  // Health check para Railway
+  app.getHttpAdapter().getInstance().get('/api/health', (_req: any, res: any) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  })
+
   const port = process.env.PORT ?? 4001
   await app.listen(port)
   console.log(`ELLO Club API rodando na porta ${port}`)

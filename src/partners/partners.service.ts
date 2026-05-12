@@ -113,6 +113,15 @@ export class PartnersService {
     }
   }
 
+  // ── Atualizar perfil (logo, fotos, descrição) ─────────────────────────────
+  async updateProfile(partnerId: string, data: { logo?: string; photos?: string[]; description?: string; website?: string; phone?: string }) {
+    const partner = await this.prisma.partner.update({
+      where: { id: partnerId },
+      data,
+    })
+    return this.safePartner(partner)
+  }
+
   // ── Ofertas ───────────────────────────────────────────────────────────────
   async getOffers(partnerId: string) {
     return this.prisma.offer.findMany({

@@ -24,7 +24,7 @@ export class OffersService {
 
     const offers = await this.prisma.offer.findMany({
       where,
-      include: { partner: { select: { id: true, name: true, logo: true, category: true } } },
+      include: { partner: { select: { id: true, name: true, logo: true, photos: true, category: true } } },
       orderBy: params.sort === 'rating' ? { rating: 'desc' } : { createdAt: 'desc' },
     })
 
@@ -35,7 +35,7 @@ export class OffersService {
   async findOne(id: string) {
     const offer = await this.prisma.offer.findUnique({
       where: { id },
-      include: { partner: { select: { id: true, name: true, logo: true, phone: true, website: true } } },
+      include: { partner: { select: { id: true, name: true, logo: true, photos: true, phone: true, website: true } } },
     })
     if (!offer || offer.status !== 'ACTIVE') throw new NotFoundException('Oferta não encontrada')
     return offer

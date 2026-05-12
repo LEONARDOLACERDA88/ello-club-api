@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Put, Delete,
+  Controller, Get, Post, Put, Patch, Delete,
   Body, Param, Req, UseGuards, HttpCode,
 } from '@nestjs/common'
 import type { Request } from 'express'
@@ -28,6 +28,16 @@ export class PartnersController {
   @RequireType('partner')
   getProfile(@CurrentUser('id') partnerId: string) {
     return this.partners.getProfile(partnerId)
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RequireType('partner')
+  updateProfile(
+    @CurrentUser('id') partnerId: string,
+    @Body() body: { logo?: string; photos?: string[]; description?: string; website?: string; phone?: string },
+  ) {
+    return this.partners.updateProfile(partnerId, body)
   }
 
   @Get('dashboard')

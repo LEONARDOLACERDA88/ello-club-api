@@ -85,6 +85,7 @@ model Partner {
   cnpj           String        @unique
   category       String
   logo           String?
+  photos         String[]
   description    String?
   website        String?
   phone          String?
@@ -337,4 +338,77 @@ model Notification {
 
   @@index([userId, read])
   @@map("notifications")
+}
+
+// ─── PARCEIROS EXTERNOS ───────────────────────────────────────────────────────
+
+enum IntegrationType {
+  AFFILIATE   // Link de afiliado rastreável (Lomadee, Afilio, etc.)
+  API_DIRECT  // API própria do parceiro (FlyLift, MaxMilhas, etc.)
+  WIDGET      // Iframe / widget embedado
+  QR_VOUCHER  // QR Code ou cupom gerado pelo parceiro
+  POSTBACK    // Parceiro envia evento de conversão via webhook
+}
+
+model ExternalPartner {
+  id              String          @id @default(uuid())
+  name            String
+  category        String
+  description     String?
+  logo            String?
+  image           String?
+  discount        Int             @default(0)    // desconto máximo exibido (%)
+  integrationType IntegrationType
+
+  // Configuração por tipo de integração
+  affiliateUrl    String?   // AFFILIATE: URL rastreável
+  apiEndpoint     String?   // API_DIRECT: endpoint base
+  apiKey          String?   // API_DIRECT: chave de acesso (armazenada criptografada)
+  widgetUrl       String?   // WIDGET: URL do iframe
+  voucherCode     String?   // QR_VOUCHER: código fixo ou gerado dinâmico
+  webhookSecret   String?   // POSTBACK: secret para validar chamadas
+
+  // Origem (para identificar no app)
+  source          String?   @default("manual")  // "manual" | "clube_certo" | "afilio" | etc.
+  externalId      String?   // ID do parceiro no sistema de origem
+
+  // Métricas
+  clickCount      Int       @default(0)
+  conversionCount Int       @default(0)
+  totalSavings    Decimal   @default(0) @db.Decimal(10, 2)
+
+  // Controle
+  status          String    @default("active")  // active | inactive | pending
+  featured        Boolean   @default(false)
+  sortOrder       Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  clicks          ExternalClick[]
+
+  @@index([category])
+  @@index([integrationType])
+  @@index([source])
+  @@index([status])
+  @@map("external_partners")
+}
+
+model ExternalClick {
+  id                String          @id @default(uuid())
+  externalPartnerId String
+  partner           ExternalPartner @relation(fields: [externalPartnerId], references: [id], onDelete: Cascade)
+  userId            String?         // null se não logado
+  sessionId         String?         // rastreio anônimo
+  savingsAmount     Decimal?        @db.Decimal(10, 2)  // preenchido via postback
+  converted         Boolean         @default(false)
+  convertedAt       DateTime?
+  ipAddress         String?
+  userAgent         String?
+  createdAt         DateTime        @default(now())
+
+  @@index([externalPartnerId])
+  @@index([userId])
+  @@index([converted])
+  @@map("external_clicks")
 }

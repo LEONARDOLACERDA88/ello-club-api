@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { AuditService } from '../audit/audit.service'
+import { NotificationsService } from '../notifications/notifications.service'
 import * as crypto from 'crypto'
 
 @Injectable()
@@ -8,6 +9,7 @@ export class OffersService {
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
+    private notifications: NotificationsService,
   ) {}
 
   // ── Listar ofertas ────────────────────────────────────────────────────────
@@ -115,6 +117,13 @@ export class OffersService {
       entityId: transaction.id,
       ipAddress: ip,
     })
+
+    // Push de confirmação para o usuário (async, não bloqueia resposta)
+    this.notifications.sendToUser(userId, {
+      title: 'Resgate confirmado!',
+      body: `${offer.title} — use o codigo ${code} no estabelecimento.`,
+      url: '/historico',
+    }).catch(() => {})
 
     // Dispara webhook do parceiro (async, não bloqueia resposta)
     this.dispatchWebhook(offer.partnerId, 'redemption.created', {

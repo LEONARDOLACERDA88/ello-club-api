@@ -9,6 +9,7 @@ import { OffersModule } from './offers/offers.module'
 import { PartnersModule } from './partners/partners.module'
 import { AdminModule } from './admin/admin.module'
 import { ExternalPartnersModule } from './external-partners/external-partners.module'
+import { NotificationsModule } from './notifications/notifications.module'
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ExternalPartnersModule } from './external-partners/external-partners.mo
     PartnersModule,
     AdminModule,
     ExternalPartnersModule,
+    NotificationsModule,
   ],
   providers: [
     // Aplica rate limiting em todas as rotas

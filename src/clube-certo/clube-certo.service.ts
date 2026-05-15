@@ -45,6 +45,8 @@ export class ClubeCertoService implements OnModuleInit {
       // 3. Tabela de clicks
       await exec(`CREATE TABLE IF NOT EXISTS "external_clicks" ("id" TEXT NOT NULL,"externalPartnerId" TEXT NOT NULL,"userId" TEXT,"sessionId" TEXT,"savingsAmount" DECIMAL(10,2),"converted" BOOLEAN NOT NULL DEFAULT false,"convertedAt" TIMESTAMP(3),"ipAddress" TEXT,"userAgent" TEXT,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "external_clicks_pkey" PRIMARY KEY ("id"))`)
       // 4. Unique constraint (necessário para upsert do Prisma via ON CONFLICT)
+      // Se existir um partial index com o mesmo nome (da migration antiga), dropar primeiro
+      await exec(`DROP INDEX IF EXISTS "external_partners_externalId_source_key"`)
       await exec(`DO $$ BEGIN ALTER TABLE "external_partners" ADD CONSTRAINT "external_partners_externalId_source_key" UNIQUE ("externalId","source"); EXCEPTION WHEN duplicate_object THEN null; END $$`)
       // 5. Índices opcionais
       await exec(`CREATE INDEX IF NOT EXISTS "external_partners_status_idx" ON "external_partners"("status")`)

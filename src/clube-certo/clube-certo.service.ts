@@ -84,9 +84,13 @@ export class ClubeCertoService implements OnModuleInit {
           CONSTRAINT "external_clicks_pkey" PRIMARY KEY ("id")
         );
 
-        CREATE UNIQUE INDEX IF NOT EXISTS "external_partners_externalId_source_key"
-          ON "external_partners"("externalId", "source")
-          WHERE "externalId" IS NOT NULL AND "source" IS NOT NULL;
+        -- Unique constraint (não partial index) para suportar ON CONFLICT do Prisma
+        DO $$ BEGIN
+          ALTER TABLE "external_partners"
+            ADD CONSTRAINT "external_partners_externalId_source_key"
+            UNIQUE ("externalId", "source");
+        EXCEPTION WHEN duplicate_table THEN null;
+                 WHEN duplicate_object THEN null; END $$;
 
         CREATE INDEX IF NOT EXISTS "external_partners_status_idx" ON "external_partners"("status");
         CREATE INDEX IF NOT EXISTS "external_partners_source_idx" ON "external_partners"("source");

@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { Cron, CronExpression } from '@nestjs/schedule'
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
+import { Cron } from '@nestjs/schedule'
 import { PrismaService } from '../prisma/prisma.service'
 
 const BASE_URL = 'https://node.clubecerto.com.br/superapp'
@@ -27,12 +27,75 @@ const CAT_MAP: Record<string, string> = {
 }
 
 @Injectable()
-export class ClubeCertoService {
+export class ClubeCertoService implements OnModuleInit {
   private readonly logger = new Logger(ClubeCertoService.name)
   private companyToken: string | null = null
   private tokenExpiresAt: number = 0
 
   constructor(private prisma: PrismaService) {}
+
+  async onModuleInit() {
+    // Garante que as tabelas existam mesmo se migrate deploy não rodou
+    try {
+      await (this.prisma as any).$executeRawUnsafe(`
+        DO $$ BEGIN
+          CREATE TYPE "IntegrationType" AS ENUM ('AFFILIATE','API_DIRECT','WIDGET','QR_VOUCHER','POSTBACK');
+        EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+        CREATE TABLE IF NOT EXISTS "external_partners" (
+          "id" TEXT NOT NULL,
+          "name" TEXT NOT NULL,
+          "category" TEXT NOT NULL,
+          "description" TEXT,
+          "logo" TEXT,
+          "image" TEXT,
+          "discount" INTEGER NOT NULL DEFAULT 0,
+          "integrationType" "IntegrationType" NOT NULL DEFAULT 'AFFILIATE',
+          "affiliateUrl" TEXT,
+          "apiEndpoint" TEXT,
+          "apiKey" TEXT,
+          "widgetUrl" TEXT,
+          "voucherCode" TEXT,
+          "webhookSecret" TEXT,
+          "source" TEXT DEFAULT 'manual',
+          "externalId" TEXT,
+          "clickCount" INTEGER NOT NULL DEFAULT 0,
+          "conversionCount" INTEGER NOT NULL DEFAULT 0,
+          "totalSavings" DECIMAL(10,2) NOT NULL DEFAULT 0,
+          "status" TEXT NOT NULL DEFAULT 'active',
+          "featured" BOOLEAN NOT NULL DEFAULT false,
+          "sortOrder" INTEGER NOT NULL DEFAULT 0,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "external_partners_pkey" PRIMARY KEY ("id")
+        );
+
+        CREATE TABLE IF NOT EXISTS "external_clicks" (
+          "id" TEXT NOT NULL,
+          "externalPartnerId" TEXT NOT NULL,
+          "userId" TEXT,
+          "sessionId" TEXT,
+          "savingsAmount" DECIMAL(10,2),
+          "converted" BOOLEAN NOT NULL DEFAULT false,
+          "convertedAt" TIMESTAMP(3),
+          "ipAddress" TEXT,
+          "userAgent" TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "external_clicks_pkey" PRIMARY KEY ("id")
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS "external_partners_externalId_source_key"
+          ON "external_partners"("externalId", "source")
+          WHERE "externalId" IS NOT NULL AND "source" IS NOT NULL;
+
+        CREATE INDEX IF NOT EXISTS "external_partners_status_idx" ON "external_partners"("status");
+        CREATE INDEX IF NOT EXISTS "external_partners_source_idx" ON "external_partners"("source");
+      `)
+      this.logger.log('Tabelas external_partners e external_clicks verificadas/criadas')
+    } catch (err: any) {
+      this.logger.error('Erro ao criar tabelas Clube Certo:', err.message)
+    }
+  }
 
   // ── Autenticação ─────────────────────────────────────────────────────────────
 

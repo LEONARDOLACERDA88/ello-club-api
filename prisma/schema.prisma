@@ -404,6 +404,7 @@ model ExternalPartner {
 
   clicks          ExternalClick[]
 
+  @@unique([externalId, source])
   @@index([category])
   @@index([integrationType])
   @@index([source])

@@ -10,11 +10,14 @@ import { PartnersModule } from './partners/partners.module'
 import { AdminModule } from './admin/admin.module'
 import { ExternalPartnersModule } from './external-partners/external-partners.module'
 import { NotificationsModule } from './notifications/notifications.module'
+import { ClubeCertoModule } from './clube-certo/clube-certo.module'
+import { ScheduleModule } from '@nestjs/schedule'
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -23,6 +26,7 @@ import { NotificationsModule } from './notifications/notifications.module'
     AdminModule,
     ExternalPartnersModule,
     NotificationsModule,
+    ClubeCertoModule,
   ],
   providers: [
     // Aplica rate limiting em todas as rotas

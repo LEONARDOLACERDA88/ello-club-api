@@ -11,6 +11,7 @@ import { AdminModule } from './admin/admin.module'
 import { ExternalPartnersModule } from './external-partners/external-partners.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { ClubeCertoModule } from './clube-certo/clube-certo.module'
+import { AsaasModule } from './asaas/asaas.module'
 import { ScheduleModule } from '@nestjs/schedule'
 
 @Module({
@@ -27,6 +28,7 @@ import { ScheduleModule } from '@nestjs/schedule'
     ExternalPartnersModule,
     NotificationsModule,
     ClubeCertoModule,
+    AsaasModule,
   ],
   providers: [
     // Aplica rate limiting em todas as rotas

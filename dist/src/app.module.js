@@ -20,6 +20,7 @@ const admin_module_1 = require("./admin/admin.module");
 const external_partners_module_1 = require("./external-partners/external-partners.module");
 const notifications_module_1 = require("./notifications/notifications.module");
 const clube_certo_module_1 = require("./clube-certo/clube-certo.module");
+const asaas_module_1 = require("./asaas/asaas.module");
 const schedule_1 = require("@nestjs/schedule");
 let AppModule = class AppModule {
 };
@@ -39,6 +40,7 @@ exports.AppModule = AppModule = __decorate([
             external_partners_module_1.ExternalPartnersModule,
             notifications_module_1.NotificationsModule,
             clube_certo_module_1.ClubeCertoModule,
+            asaas_module_1.AsaasModule,
         ],
         providers: [
             { provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard },

@@ -29,6 +29,11 @@ model User {
   marketingConsent   Boolean   @default(false)
   deletedAt          DateTime?
 
+  // Asaas / Planos
+  asaasCustomerId String?
+  planKey         String?
+  planExpiresAt   DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -38,6 +43,7 @@ model User {
   auditLogs         AuditLog[]
   notifications     Notification[]
   pushSubscriptions PushSubscription[]
+  subscriptions     AsaasSubscription[]
 
   @@index([email])
   @@index([status])
@@ -429,4 +435,42 @@ model ExternalClick {
   @@index([userId])
   @@index([converted])
   @@map("external_clicks")
+}
+
+// ── Asaas — Assinaturas ───────────────────────────────────────────────────────
+
+model AsaasSubscription {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asaasId     String   @unique  // ID da subscription no Asaas
+  planKey     String   // individual | familia | empresarial
+  status      String   @default("PENDING")  // PENDING | ACTIVE | OVERDUE | CANCELLED
+  billingType String   // PIX | BOLETO | CREDIT_CARD
+  value       Decimal  @db.Decimal(10, 2)
+  activatedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("asaas_subscriptions")
+}
+
+// ── Rastreamento de leads ─────────────────────────────────────────────────────
+
+model LeadEvent {
+  id       String   @id @default(uuid())
+  userId   String?
+  email    String?
+  name     String?
+  event    String   // viewed_plans | selected_plan | abandoned_checkout
+  planKey  String?
+  metadata String?  // JSON string com dados extras
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([email])
+  @@index([event])
+  @@map("lead_events")
 }

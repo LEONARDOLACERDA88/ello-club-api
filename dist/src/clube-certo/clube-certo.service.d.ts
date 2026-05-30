@@ -25,6 +25,27 @@ export declare class ClubeCertoService implements OnModuleInit {
         active: any;
         inactive: any;
     }>;
+    registerUser(data: {
+        name: string;
+        cpf: string;
+        email?: string;
+        birthDate?: string;
+        phone?: string;
+    }): Promise<{
+        success: boolean;
+        error?: string;
+    }>;
+    getCategories(): Promise<any[]>;
+    searchEstablishments(params: {
+        cityId?: number;
+        categoryId?: number;
+        search?: string;
+        page?: number;
+    }): Promise<any>;
+    getStates(): Promise<any[]>;
+    getCities(stateId: number): Promise<any[]>;
+    getCashbackWalletUrl(cpf: string): string;
+    getEstablishmentDetail(id: number): Promise<any>;
     toggleStatus(partnerId: string): Promise<{
         status: string;
     }>;

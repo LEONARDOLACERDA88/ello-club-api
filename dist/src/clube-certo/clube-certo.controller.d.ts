@@ -28,4 +28,26 @@ export declare class ClubeCertoController {
         partners: any;
         total: any;
     }>;
+    getCategories(): Promise<any[]>;
+    searchEstablishments(cityId?: string, categoryId?: string, search?: string, page?: string): Promise<any>;
+    getEstablishment(id: string): Promise<any>;
+    getStates(): Promise<any[]>;
+    getCities(stateId: string): Promise<any[]>;
+    getCashbackWallet(user: any): {
+        error: string;
+        url?: undefined;
+    } | {
+        url: string;
+        error?: undefined;
+    };
+    registerUser(body: {
+        name: string;
+        cpf: string;
+        email?: string;
+        birthDate?: string;
+        phone?: string;
+    }): Promise<{
+        success: boolean;
+        error?: string;
+    }>;
 }

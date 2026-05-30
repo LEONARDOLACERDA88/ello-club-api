@@ -45,6 +45,33 @@ let ClubeCertoController = class ClubeCertoController {
             status: 'active',
         });
     }
+    getCategories() {
+        return this.svc.getCategories();
+    }
+    searchEstablishments(cityId, categoryId, search, page) {
+        return this.svc.searchEstablishments({
+            cityId: cityId ? Number(cityId) : undefined,
+            categoryId: categoryId ? Number(categoryId) : undefined,
+            search,
+            page: page ? Number(page) : undefined,
+        });
+    }
+    getEstablishment(id) {
+        return this.svc.getEstablishmentDetail(Number(id));
+    }
+    getStates() { return this.svc.getStates(); }
+    getCities(stateId) {
+        return this.svc.getCities(Number(stateId));
+    }
+    getCashbackWallet(user) {
+        const cpf = user.cpf || '';
+        if (!cpf)
+            return { error: 'CPF não cadastrado' };
+        return { url: this.svc.getCashbackWalletUrl(cpf) };
+    }
+    registerUser(body) {
+        return this.svc.registerUser(body);
+    }
 };
 exports.ClubeCertoController = ClubeCertoController;
 __decorate([
@@ -97,6 +124,57 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], ClubeCertoController.prototype, "listPublic", null);
+__decorate([
+    (0, common_1.Get)('categories'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ClubeCertoController.prototype, "getCategories", null);
+__decorate([
+    (0, common_1.Get)('establishments'),
+    __param(0, (0, common_1.Query)('cityId')),
+    __param(1, (0, common_1.Query)('categoryId')),
+    __param(2, (0, common_1.Query)('search')),
+    __param(3, (0, common_1.Query)('page')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:returntype", void 0)
+], ClubeCertoController.prototype, "searchEstablishments", null);
+__decorate([
+    (0, common_1.Get)('establishments/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ClubeCertoController.prototype, "getEstablishment", null);
+__decorate([
+    (0, common_1.Get)('states'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ClubeCertoController.prototype, "getStates", null);
+__decorate([
+    (0, common_1.Get)('states/:stateId/cities'),
+    __param(0, (0, common_1.Param)('stateId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ClubeCertoController.prototype, "getCities", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('cashback-wallet'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ClubeCertoController.prototype, "getCashbackWallet", null);
+__decorate([
+    (0, common_1.Post)('register-user'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ClubeCertoController.prototype, "registerUser", null);
 exports.ClubeCertoController = ClubeCertoController = __decorate([
     (0, common_1.Controller)('api/clube-certo'),
     __metadata("design:paramtypes", [clube_certo_service_1.ClubeCertoService])

@@ -8,6 +8,13 @@ export declare class PartnersController {
     constructor(partners: PartnersService);
     register(dto: RegisterPartnerDto, req: Request): Promise<any>;
     getProfile(partnerId: string): Promise<any>;
+    updateProfile(partnerId: string, body: {
+        logo?: string;
+        photos?: string[];
+        description?: string;
+        website?: string;
+        phone?: string;
+    }): Promise<any>;
     getDashboard(partnerId: string): Promise<{
         partner: any;
         offers: any;

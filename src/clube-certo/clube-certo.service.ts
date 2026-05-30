@@ -2,7 +2,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
 import { PrismaService } from '../prisma/prisma.service'
 
-const BASE_URL = 'https://node.clubecerto.com.br/superapp'
+const BASE_URL = process.env.CLUBE_CERTO_BASE_URL || 'https://node.clubecerto.com.br/superapp'
+const COMPANY_ID = process.env.CLUBE_CERTO_COMPANY_ID || '1735'
 
 // Mapa de categorias Clube Certo → categorias ELLO
 const CAT_MAP: Record<string, string> = {
@@ -269,6 +270,124 @@ export class ClubeCertoService implements OnModuleInit {
       where: { source: { in: ['clube_certo', 'clube_certo_cashback'] }, status: 'inactive' },
     })
     return { discounts, cashback, total: discounts + cashback, active, inactive }
+  }
+
+  // ── Registrar usuário no Clube Certo (chamado no cadastro ELLO) ─────────────
+
+  async registerUser(data: {
+    name: string
+    cpf: string
+    email?: string
+    birthDate?: string
+    phone?: string
+  }): Promise<{ success: boolean; error?: string }> {
+    try {
+      const token = await this.getCompanyToken()
+      const cleanCpf = data.cpf.replace(/\D/g, '')
+
+      const body: any = {
+        name: data.name,
+        cpf: cleanCpf,
+        discount: true,
+        cashback: true,
+      }
+      if (data.email)     body.email = data.email
+      if (data.birthDate) body.birthDate = data.birthDate
+      if (data.phone)     body.phone = data.phone.replace(/\D/g, '')
+
+      const res = await fetch(`${BASE_URL}/companyAPI/associate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as any
+        this.logger.warn(`Clube Certo registerUser falhou para ${cleanCpf}: ${err?.error}`)
+        return { success: false, error: err?.error || `HTTP ${res.status}` }
+      }
+
+      this.logger.log(`Usuário ${cleanCpf} registrado no Clube Certo`)
+      return { success: true }
+    } catch (err: any) {
+      this.logger.error('Erro ao registrar usuário no Clube Certo:', err.message)
+      return { success: false, error: err.message }
+    }
+  }
+
+  // ── Categorias com cores e ícones oficiais ───────────────────────────────────
+
+  async getCategories(): Promise<any[]> {
+    const userToken = await this.getUserTokenForSync(await this.getCompanyToken())
+    const res = await fetch(`${BASE_URL}/companyAPI/establishment/categories`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+    if (!res.ok) return []
+    return res.json()
+  }
+
+  // ── Busca dinâmica de estabelecimentos por cidade/categoria ──────────────────
+
+  async searchEstablishments(params: {
+    cityId?: number
+    categoryId?: number
+    search?: string
+    page?: number
+  }): Promise<any> {
+    const userToken = await this.getUserTokenForSync(await this.getCompanyToken())
+    const qs = new URLSearchParams()
+    if (params.cityId)    qs.set('cityId', String(params.cityId))
+    if (params.categoryId) qs.set('categoryId', String(params.categoryId))
+    if (params.search)    qs.set('name', params.search)
+    if (params.page)      qs.set('page', String(params.page))
+
+    const res = await fetch(`${BASE_URL}/companyAPI/establishment/search?${qs}`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+    if (!res.ok) return { establishments: [], total: 0 }
+    const data = await res.json()
+    return Array.isArray(data) ? { establishments: data, total: data.length } : data
+  }
+
+  // ── Estados e cidades ────────────────────────────────────────────────────────
+
+  async getStates(): Promise<any[]> {
+    const userToken = await this.getUserTokenForSync(await this.getCompanyToken())
+    const res = await fetch(`${BASE_URL}/locations/states`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+    if (!res.ok) return []
+    return res.json()
+  }
+
+  async getCities(stateId: number): Promise<any[]> {
+    const userToken = await this.getUserTokenForSync(await this.getCompanyToken())
+    const res = await fetch(`${BASE_URL}/locations/cities/${stateId}`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+    if (!res.ok) return []
+    return res.json()
+  }
+
+  // ── URL da carteira de cashback por CPF ──────────────────────────────────────
+
+  getCashbackWalletUrl(cpf: string): string {
+    const cleanCpf = cpf.replace(/\D/g, '')
+    return `${BASE_URL.replace('node.clubecerto.com.br/superapp', 'integrations.clubecerto.com.br')}/webapp/${cleanCpf}/${COMPANY_ID}`
+  }
+
+  // ── Detalhes de estabelecimento ──────────────────────────────────────────────
+
+  async getEstablishmentDetail(id: number): Promise<any> {
+    const userToken = await this.getUserTokenForSync(await this.getCompanyToken())
+    const res = await fetch(`${BASE_URL}/companyAPI/establishment/${id}`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    })
+    if (!res.ok) return null
+    return res.json()
   }
 
   // ── Toggle ativo/inativo (admin) ─────────────────────────────────────────────

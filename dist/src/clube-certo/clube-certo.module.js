@@ -6,20 +6,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OffersModule = void 0;
+exports.ClubeCertoModule = void 0;
 const common_1 = require("@nestjs/common");
-const offers_service_1 = require("./offers.service");
-const offers_controller_1 = require("./offers.controller");
-const audit_service_1 = require("../audit/audit.service");
-const notifications_module_1 = require("../notifications/notifications.module");
-let OffersModule = class OffersModule {
+const clube_certo_controller_1 = require("./clube-certo.controller");
+const clube_certo_service_1 = require("./clube-certo.service");
+let ClubeCertoModule = class ClubeCertoModule {
 };
-exports.OffersModule = OffersModule;
-exports.OffersModule = OffersModule = __decorate([
+exports.ClubeCertoModule = ClubeCertoModule;
+exports.ClubeCertoModule = ClubeCertoModule = __decorate([
     (0, common_1.Module)({
-        imports: [notifications_module_1.NotificationsModule],
-        providers: [offers_service_1.OffersService, audit_service_1.AuditService],
-        controllers: [offers_controller_1.OffersController],
+        controllers: [clube_certo_controller_1.ClubeCertoController],
+        providers: [clube_certo_service_1.ClubeCertoService],
+        exports: [clube_certo_service_1.ClubeCertoService],
     })
-], OffersModule);
-//# sourceMappingURL=offers.module.js.map
+], ClubeCertoModule);
+//# sourceMappingURL=clube-certo.module.js.map

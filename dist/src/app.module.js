@@ -17,6 +17,10 @@ const users_module_1 = require("./users/users.module");
 const offers_module_1 = require("./offers/offers.module");
 const partners_module_1 = require("./partners/partners.module");
 const admin_module_1 = require("./admin/admin.module");
+const external_partners_module_1 = require("./external-partners/external-partners.module");
+const notifications_module_1 = require("./notifications/notifications.module");
+const clube_certo_module_1 = require("./clube-certo/clube-certo.module");
+const schedule_1 = require("@nestjs/schedule");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -25,12 +29,16 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             throttler_1.ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+            schedule_1.ScheduleModule.forRoot(),
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             offers_module_1.OffersModule,
             partners_module_1.PartnersModule,
             admin_module_1.AdminModule,
+            external_partners_module_1.ExternalPartnersModule,
+            notifications_module_1.NotificationsModule,
+            clube_certo_module_1.ClubeCertoModule,
         ],
         providers: [
             { provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard },

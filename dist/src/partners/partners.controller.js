@@ -32,6 +32,9 @@ let PartnersController = class PartnersController {
     getProfile(partnerId) {
         return this.partners.getProfile(partnerId);
     }
+    updateProfile(partnerId, body) {
+        return this.partners.updateProfile(partnerId, body);
+    }
     getDashboard(partnerId) {
         return this.partners.getDashboard(partnerId);
     }
@@ -87,6 +90,16 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], PartnersController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.Patch)('profile'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, current_user_decorator_1.RequireType)('partner'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], PartnersController.prototype, "updateProfile", null);
 __decorate([
     (0, common_1.Get)('dashboard'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

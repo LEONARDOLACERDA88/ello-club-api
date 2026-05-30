@@ -46,13 +46,16 @@ exports.OffersService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const audit_service_1 = require("../audit/audit.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 const crypto = __importStar(require("crypto"));
 let OffersService = class OffersService {
     prisma;
     audit;
-    constructor(prisma, audit) {
+    notifications;
+    constructor(prisma, audit, notifications) {
         this.prisma = prisma;
         this.audit = audit;
+        this.notifications = notifications;
     }
     async findAll(params) {
         const where = { status: 'ACTIVE' };
@@ -66,7 +69,7 @@ let OffersService = class OffersService {
         }
         const offers = await this.prisma.offer.findMany({
             where,
-            include: { partner: { select: { id: true, name: true, logo: true, category: true } } },
+            include: { partner: { select: { id: true, name: true, logo: true, photos: true, category: true } } },
             orderBy: params.sort === 'rating' ? { rating: 'desc' } : { createdAt: 'desc' },
         });
         return { offers, total: offers.length };
@@ -74,7 +77,7 @@ let OffersService = class OffersService {
     async findOne(id) {
         const offer = await this.prisma.offer.findUnique({
             where: { id },
-            include: { partner: { select: { id: true, name: true, logo: true, phone: true, website: true } } },
+            include: { partner: { select: { id: true, name: true, logo: true, photos: true, phone: true, website: true } } },
         });
         if (!offer || offer.status !== 'ACTIVE')
             throw new common_1.NotFoundException('Oferta não encontrada');
@@ -144,6 +147,11 @@ let OffersService = class OffersService {
             entityId: transaction.id,
             ipAddress: ip,
         });
+        this.notifications.sendToUser(userId, {
+            title: 'Resgate confirmado!',
+            body: `${offer.title} — use o codigo ${code} no estabelecimento.`,
+            url: '/historico',
+        }).catch(() => { });
         this.dispatchWebhook(offer.partnerId, 'redemption.created', {
             transactionId: transaction.id,
             code,
@@ -187,6 +195,7 @@ exports.OffersService = OffersService;
 exports.OffersService = OffersService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        audit_service_1.AuditService])
+        audit_service_1.AuditService,
+        notifications_service_1.NotificationsService])
 ], OffersService);
 //# sourceMappingURL=offers.service.js.map

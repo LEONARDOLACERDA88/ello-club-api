@@ -22,6 +22,13 @@ export declare class PartnersService {
         };
         recentTransactions: any;
     }>;
+    updateProfile(partnerId: string, data: {
+        logo?: string;
+        photos?: string[];
+        description?: string;
+        website?: string;
+        phone?: string;
+    }): Promise<any>;
     getOffers(partnerId: string): Promise<any>;
     createOffer(partnerId: string, dto: CreateOfferDto): Promise<any>;
     updateOffer(partnerId: string, offerId: string, dto: Partial<CreateOfferDto>): Promise<any>;

@@ -1,9 +1,11 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class OffersService {
     private prisma;
     private audit;
-    constructor(prisma: PrismaService, audit: AuditService);
+    private notifications;
+    constructor(prisma: PrismaService, audit: AuditService, notifications: NotificationsService);
     findAll(params: {
         category?: string;
         search?: string;

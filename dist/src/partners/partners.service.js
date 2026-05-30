@@ -137,6 +137,13 @@ let PartnersService = class PartnersService {
             recentTransactions,
         };
     }
+    async updateProfile(partnerId, data) {
+        const partner = await this.prisma.partner.update({
+            where: { id: partnerId },
+            data,
+        });
+        return this.safePartner(partner);
+    }
     async getOffers(partnerId) {
         return this.prisma.offer.findMany({
             where: { partnerId },

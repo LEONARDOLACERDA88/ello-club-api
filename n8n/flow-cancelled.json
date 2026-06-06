@@ -1,0 +1,110 @@
+{
+  "name": "ELLO Club — Win-back Cancelamento",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ello-cancelled",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-cancelled",
+      "name": "Webhook Cancelado",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.event}}",
+              "operation": "equals",
+              "value2": "plan_cancelled"
+            }
+          ]
+        }
+      },
+      "id": "if-cancelled",
+      "name": "É plan_cancelled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{$env.RESEND_API_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "from", "value": "Leonardo — ELLO Club <leo@elloclub.com.br>" },
+            { "name": "to", "value": "={{$json.email}}" },
+            { "name": "subject", "value": "Sua assinatura foi cancelada — sentiremos sua falta" },
+            {
+              "name": "html",
+              "value": "<h2>Até logo, {{$json.name}} 👋</h2><p>Seu plano ELLO Club foi cancelado conforme solicitado.</p><p>Ficamos felizes em ter feito parte da sua jornada.</p><p>Se quiser voltar a qualquer momento, estaremos aqui:</p><p><a href='https://elloclub.com.br/planos' style='background:#D4AF37;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold'>Reativar minha conta →</a></p><p style='color:#888;font-size:12px'>Tem algum feedback? Responda este e-mail — lemos tudo.</p>"
+            }
+          ]
+        }
+      },
+      "id": "email-cancelled",
+      "name": "Email Cancelamento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "amount": 7,
+        "unit": "days"
+      },
+      "id": "wait-7d",
+      "name": "Aguarda 7 dias",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "to": "={{$json.phone}}",
+        "message": "Oi, {{$json.name}}! Aqui é o Léo do ELLO Club.\n\nFaz uma semana que você cancelou e queria saber: teve algum problema? Posso ajudar?\n\nSe quiser voltar, estou oferecendo o primeiro mês com desconto especial para ex-membros: https://elloclub.com.br/planos\n\n— Léo"
+      },
+      "id": "whatsapp-winback",
+      "name": "WhatsApp Win-back 7d",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1120, 200]
+    }
+  ],
+  "connections": {
+    "Webhook Cancelado": {
+      "main": [
+        [{ "node": "É plan_cancelled?", "type": "main", "index": 0 }]
+      ]
+    },
+    "É plan_cancelled?": {
+      "main": [
+        [{ "node": "Email Cancelamento", "type": "main", "index": 0 }]
+      ]
+    },
+    "Email Cancelamento": {
+      "main": [
+        [{ "node": "Aguarda 7 dias", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aguarda 7 dias": {
+      "main": [
+        [{ "node": "WhatsApp Win-back 7d", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

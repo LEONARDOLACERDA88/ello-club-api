@@ -1,0 +1,92 @@
+{
+  "name": "ELLO Club — Cobrança Vencida",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ello-overdue",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-overdue",
+      "name": "Webhook Overdue",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.event}}",
+              "operation": "equals",
+              "value2": "payment_overdue"
+            }
+          ]
+        }
+      },
+      "id": "if-overdue",
+      "name": "É payment_overdue?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "to": "={{$json.phone}}",
+        "message": "Oi, {{$json.name}}! Seu pagamento do ELLO Club venceu.\n\nPara manter acesso a todos os seus benefícios, renove agora:\n\n👉 {{$json.paymentUrl}}\n\nPrecisa de ajuda? Responda esta mensagem."
+      },
+      "id": "whatsapp-overdue",
+      "name": "WhatsApp Cobrança",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{$env.RESEND_API_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "from", "value": "ELLO Club <financeiro@elloclub.com.br>" },
+            { "name": "to", "value": "={{$json.email}}" },
+            { "name": "subject", "value": "Ação necessária: pagamento ELLO Club" },
+            {
+              "name": "html",
+              "value": "<h2>Seu pagamento venceu</h2><p>Olá, {{$json.name}}!</p><p>Seu pagamento do plano {{$json.planName}} venceu. Para continuar aproveitando todos os benefícios, clique abaixo:</p><p><a href='{{$json.paymentUrl}}' style='background:#D4AF37;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold'>Pagar agora →</a></p>"
+            }
+          ]
+        }
+      },
+      "id": "email-overdue",
+      "name": "Email Cobrança",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 420]
+    }
+  ],
+  "connections": {
+    "Webhook Overdue": {
+      "main": [
+        [{ "node": "É payment_overdue?", "type": "main", "index": 0 }]
+      ]
+    },
+    "É payment_overdue?": {
+      "main": [
+        [
+          { "node": "WhatsApp Cobrança", "type": "main", "index": 0 },
+          { "node": "Email Cobrança", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  }
+}

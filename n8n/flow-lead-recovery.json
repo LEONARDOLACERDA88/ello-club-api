@@ -1,0 +1,159 @@
+{
+  "name": "ELLO Club — Recuperação de Lead",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ello-lead",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-lead",
+      "name": "Webhook Lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.event}}",
+              "operation": "equals",
+              "value2": "abandoned_checkout"
+            }
+          ]
+        }
+      },
+      "id": "if-abandoned",
+      "name": "É abandoned_checkout?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "hours"
+      },
+      "id": "wait-1h",
+      "name": "Aguarda 1 hora",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "to": "={{$json.phone}}",
+        "message": "Oi, {{$json.name}}! Vi que você estava conferindo o ELLO Club.\n\nVocê sabia que com o plano *Fundador Individual* por apenas R$29,90/mês você tem acesso a descontos em centenas de estabelecimentos?\n\n👉 Garante agora: https://elloclub.com.br/planos\n\n_Cancele quando quiser, sem taxa._"
+      },
+      "id": "whatsapp-1h",
+      "name": "WhatsApp 1h — Lembrete suave",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 200],
+      "notes": "Conectar com Evolution API ou Z-API"
+    },
+    {
+      "parameters": {
+        "amount": 23,
+        "unit": "hours"
+      },
+      "id": "wait-24h",
+      "name": "Aguarda mais 23h",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{$env.RESEND_API_KEY}}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "from", "value": "Leonardo — ELLO Club <leo@elloclub.com.br>" },
+            { "name": "to", "value": "={{$json.email}}" },
+            { "name": "subject", "value": "{{$json.name}}, seu acesso ao ELLO Club está esperando" },
+            {
+              "name": "html",
+              "value": "<h2>Oi, {{$json.name}}!</h2><p>Você começou a se cadastrar no ELLO Club mas não finalizou.</p><p>Estamos guardando sua vaga de <strong>Membro Fundador</strong> por mais 48 horas.</p><p>Como Fundador, você garante o menor preço e benefícios exclusivos para sempre.</p><p><a href='https://elloclub.com.br/planos' style='background:#D4AF37;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold'>Garantir minha vaga →</a></p><p style='color:#888;font-size:12px'>Cancele quando quiser. Sem fidelidade.</p>"
+            }
+          ]
+        }
+      },
+      "id": "email-24h",
+      "name": "Email 24h — Urgência vaga",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "id": "wait-3d",
+      "name": "Aguarda 2 dias",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "to": "={{$json.phone}}",
+        "message": "{{$json.name}}, última mensagem sobre o ELLO Club 🙏\n\nSe quiser fazer parte do clube com desconto de fundador, o link ainda está ativo:\n\n👉 https://elloclub.com.br/planos\n\nSe não for o momento certo, sem problema. Estarei aqui quando precisar!\n\n— Léo Lacerda"
+      },
+      "id": "whatsapp-3d",
+      "name": "WhatsApp 3d — Última chance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1780, 200]
+    }
+  ],
+  "connections": {
+    "Webhook Lead": {
+      "main": [
+        [{ "node": "É abandoned_checkout?", "type": "main", "index": 0 }]
+      ]
+    },
+    "É abandoned_checkout?": {
+      "main": [
+        [{ "node": "Aguarda 1 hora", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aguarda 1 hora": {
+      "main": [
+        [{ "node": "WhatsApp 1h — Lembrete suave", "type": "main", "index": 0 }]
+      ]
+    },
+    "WhatsApp 1h — Lembrete suave": {
+      "main": [
+        [{ "node": "Aguarda mais 23h", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aguarda mais 23h": {
+      "main": [
+        [{ "node": "Email 24h — Urgência vaga", "type": "main", "index": 0 }]
+      ]
+    },
+    "Email 24h — Urgência vaga": {
+      "main": [
+        [{ "node": "Aguarda 2 dias", "type": "main", "index": 0 }]
+      ]
+    },
+    "Aguarda 2 dias": {
+      "main": [
+        [{ "node": "WhatsApp 3d — Última chance", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

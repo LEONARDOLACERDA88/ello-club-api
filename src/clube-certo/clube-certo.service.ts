@@ -8,23 +8,37 @@ const COMPANY_ID = process.env.CLUBE_CERTO_COMPANY_ID || '1735'
 // Mapa de categorias Clube Certo → categorias ELLO
 const CAT_MAP: Record<string, string> = {
   'Gastronomia':          'Gastronomia',
-  'Saúde':                'Saúde',
+  'Saúde':                'Farmácia e Saúde',
   'Educação':             'Educação',
   'Beleza e Estética':    'Beleza',
   'Moda':                 'Moda',
   'Turismo':              'Viagem',
   'Delivery':             'Gastronomia',
   'Hospedagem':           'Hotelaria',
-  'Automotivo':           'Outros',
-  'Comércio':             'Outros',
-  'Serviços':             'Outros',
-  'Loja virtual':         'Outros',
+  'Automotivo':           'Serviços',
+  'Comércio':             'Lojas',
+  'Serviços':             'Serviços',
+  'Loja virtual':         'Lojas',
   'Pets':                 'Pets',
-  'Fitness':              'Esporte',
+  'Fitness':              'Academias',
   'Lazer':                'Entretenimento',
   'Cinema':               'Entretenimento',
-  'Posto de Combustível': 'Outros',
+  'Posto de Combustível': 'Serviços',
   'Café':                 'Gastronomia',
+}
+
+// Distingue farmácias de saúde especializada pelo nome do estabelecimento
+function getHealthSubcategory(name: string): string {
+  const n = name.toLowerCase()
+  const isSpecialized =
+    n.includes('laboratório') || n.includes('laboratorio') ||
+    n.includes('clínica') || n.includes('clinica') ||
+    n.includes('odonto') || n.includes('dent') ||
+    n.includes('médico') || n.includes('medico') ||
+    n.includes('imagem') || n.includes('pardini') ||
+    n.includes('padrão') || n.includes('padrao') ||
+    n.includes('marcos lab') || n.includes('exame')
+  return isSpecialized ? 'Saúde Especializada' : 'Farmácia e Saúde'
 }
 
 @Injectable()
@@ -145,7 +159,8 @@ export class ClubeCertoService implements OnModuleInit {
     let count = 0
 
     for (const est of establishments) {
-      const category = CAT_MAP[est.category?.name] || 'Outros'
+      let category = CAT_MAP[est.category?.name] || 'Outros'
+      if (category === 'Farmácia e Saúde') category = getHealthSubcategory(est.name)
       const discountNum = parseInt((est.discount || '0').replace('%', '')) || 0
       const affiliateUrl = est.discountLink || est.store || null
 

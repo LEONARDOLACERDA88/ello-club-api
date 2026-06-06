@@ -1,0 +1,108 @@
+{
+  "name": "ELLO Club — Boas-vindas ao Plano",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ello-welcome",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-welcome",
+      "name": "Webhook Boas-vindas",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.event}}",
+              "operation": "equals",
+              "value2": "plan_activated"
+            }
+          ]
+        }
+      },
+      "id": "if-plan-activated",
+      "name": "É plan_activated?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "to": "={{$json.phone}}",
+        "message": "Olá, {{$json.name}}! 🎉\n\nSeja bem-vindo(a) ao ELLO Club!\n\nSeu plano *{{$json.planName}}* está ativo. Agora você tem acesso a:\n✅ Descontos em centenas de estabelecimentos\n✅ Cashback em compras online\n✅ Carteirinha digital premium\n\nAcesse agora: https://elloclub.com.br/home\n\nDúvidas? Responda esta mensagem.\n\n— Equipe ELLO Club"
+      },
+      "id": "whatsapp-welcome",
+      "name": "WhatsApp Boas-vindas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 200],
+      "notes": "Conectar com Evolution API ou Z-API"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.RESEND_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "ELLO Club <noreply@elloclub.com.br>"
+            },
+            {
+              "name": "to",
+              "value": "={{$json.email}}"
+            },
+            {
+              "name": "subject",
+              "value": "Bem-vindo ao ELLO Club, {{$json.name}}!"
+            },
+            {
+              "name": "html",
+              "value": "<h1 style='color:#D4AF37'>Bem-vindo ao ELLO Club!</h1><p>Olá, {{$json.name}}!</p><p>Seu plano <strong>{{$json.planName}}</strong> foi ativado com sucesso.</p><p><a href='https://elloclub.com.br/home' style='background:#D4AF37;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold'>Acessar o Club →</a></p>"
+            }
+          ]
+        }
+      },
+      "id": "email-welcome",
+      "name": "Email Boas-vindas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [680, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Boas-vindas": {
+      "main": [
+        [{ "node": "É plan_activated?", "type": "main", "index": 0 }]
+      ]
+    },
+    "É plan_activated?": {
+      "main": [
+        [
+          { "node": "WhatsApp Boas-vindas", "type": "main", "index": 0 },
+          { "node": "Email Boas-vindas", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  }
+}

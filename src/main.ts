@@ -62,7 +62,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 4001
   await app.listen(port)
-  console.log(`ELLO Club API rodando na porta ${port}`)
+  console.log(`ELLO Club+ API rodando na porta ${port}`)
 }
 
 bootstrap()

@@ -111,7 +111,7 @@ export class AsaasService {
       value: plan.price,
       nextDueDate: today,
       cycle: 'MONTHLY',
-      description: `ELLO Club — ${plan.name}`,
+      description: `ELLO Club+ — ${plan.name}`,
       externalReference: `${data.userId}:${data.planKey}`,
       // URL de callback após pagamento
       callback: {

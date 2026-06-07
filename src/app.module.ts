@@ -12,6 +12,7 @@ import { ExternalPartnersModule } from './external-partners/external-partners.mo
 import { NotificationsModule } from './notifications/notifications.module'
 import { ClubeCertoModule } from './clube-certo/clube-certo.module'
 import { AsaasModule } from './asaas/asaas.module'
+import { CashbackModule } from './cashback/cashback.module'
 import { ScheduleModule } from '@nestjs/schedule'
 
 @Module({
@@ -29,6 +30,7 @@ import { ScheduleModule } from '@nestjs/schedule'
     NotificationsModule,
     ClubeCertoModule,
     AsaasModule,
+    CashbackModule,
   ],
   providers: [
     // Aplica rate limiting em todas as rotas

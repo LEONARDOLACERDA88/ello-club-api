@@ -328,6 +328,34 @@ export class AsaasService {
     }
   }
 
+  // ── Transferência PIX para usuário (saque de cashback) ───────────────────
+
+  async createTransfer(data: {
+    value: number
+    pixAddressKey: string
+    pixAddressKeyType: 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP'
+    description?: string
+  }): Promise<{ id: string; status: string; netValue: number }> {
+    const res = await fetch(`${BASE_URL}/transfers`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({
+        value: data.value,
+        pixAddressKey: data.pixAddressKey,
+        pixAddressKeyType: data.pixAddressKeyType,
+        description: data.description || 'Saque ELLO Club+ Cashback',
+        operationType: 'PIX',
+      }),
+    })
+
+    if (!res.ok) {
+      const err = await res.json() as any
+      throw new Error(`Asaas transfer falhou: ${JSON.stringify(err.errors)}`)
+    }
+
+    return res.json() as Promise<{ id: string; status: string; netValue: number }>
+  }
+
   // ── Stats de assinaturas (admin) ──────────────────────────────────────────
 
   async getStats() {

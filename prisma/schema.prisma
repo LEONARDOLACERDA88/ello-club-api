@@ -15,6 +15,7 @@ model User {
   passwordHash  String
   phone         String?
   cpfEncrypted  String?
+  cpfHash       String?   @unique  // SHA-256 do CPF limpo — para lookup por CPF sem expor o dado
   points        Int        @default(1000)
   totalSavings  Decimal    @default(0) @db.Decimal(10, 2)
   level         UserLevel  @default(CLASSIC)
@@ -43,7 +44,9 @@ model User {
   auditLogs         AuditLog[]
   notifications     Notification[]
   pushSubscriptions PushSubscription[]
-  subscriptions     AsaasSubscription[]
+  subscriptions         AsaasSubscription[]
+  cashbackTransactions  CashbackTransaction[]
+  cashbackWithdrawals   CashbackWithdrawal[]
 
   @@index([email])
   @@index([status])
@@ -455,6 +458,76 @@ model AsaasSubscription {
   @@index([userId])
   @@index([status])
   @@map("asaas_subscriptions")
+}
+
+// ── Cashback ──────────────────────────────────────────────────────────────────
+
+enum CashbackStatus {
+  PENDING    // aguardando confirmação da loja (30 dias)
+  CONFIRMED  // confirmado, disponível para saque
+  WITHDRAWN  // sacado
+  CANCELLED  // estornado / cancelado pela loja
+}
+
+enum WithdrawalStatus {
+  PENDING    // solicitado, aguardando transferência
+  PROCESSING // transferência iniciada no Asaas
+  DONE       // PIX enviado com sucesso
+  FAILED     // falha no Asaas
+  CANCELLED  // cancelado pelo usuário
+}
+
+model CashbackTransaction {
+  id              String          @id @default(uuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  source          String          // lomadee | afilio | clube_certo
+  externalOrderId String?         // order ID da rede de afiliados (evita duplicatas)
+  storeName       String
+  storeLogo       String?
+
+  purchaseAmount  Decimal         @db.Decimal(10, 2)
+  commissionValue Decimal         @db.Decimal(10, 2)  // comissão bruta da rede
+  cashbackAmount  Decimal         @db.Decimal(10, 2)  // 70% para o usuário
+  cashbackPercent Decimal         @db.Decimal(5, 2)
+
+  status          CashbackStatus  @default(PENDING)
+  confirmedAt     DateTime?       // quando virou CONFIRMED
+  withdrawalId    String?
+
+  withdrawal      CashbackWithdrawal? @relation(fields: [withdrawalId], references: [id])
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([externalOrderId, source])
+  @@index([userId])
+  @@index([status])
+  @@index([source])
+  @@map("cashback_transactions")
+}
+
+model CashbackWithdrawal {
+  id              String           @id @default(uuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amount          Decimal          @db.Decimal(10, 2)
+  pixKey          String
+  pixKeyType      String           // CPF | EMAIL | PHONE | EVP | CNPJ
+
+  asaasTransferId String?          @unique
+  status          WithdrawalStatus @default(PENDING)
+
+  requestedAt     DateTime         @default(now())
+  processedAt     DateTime?
+
+  transactions    CashbackTransaction[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("cashback_withdrawals")
 }
 
 // ── Rastreamento de leads ─────────────────────────────────────────────────────

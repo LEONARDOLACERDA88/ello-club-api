@@ -27,7 +27,9 @@ export class UsersService {
     if (exists) throw new ConflictException('E-mail já cadastrado')
 
     const passwordHash = await bcrypt.hash(dto.password, 12)
-    const cpfEncrypted = dto.cpf ? this.crypto.encrypt(dto.cpf) : undefined
+    const cleanCpf = dto.cpf ? dto.cpf.replace(/\D/g, '') : undefined
+    const cpfEncrypted = cleanCpf ? this.crypto.encrypt(cleanCpf) : undefined
+    const cpfHash = cleanCpf ? this.crypto.hashSha256(cleanCpf) : undefined
 
     const user = await this.prisma.user.create({
       data: {
@@ -36,6 +38,7 @@ export class UsersService {
         passwordHash,
         phone: dto.phone,
         cpfEncrypted,
+        cpfHash,
         lgpdConsentAt: new Date(),
         lgpdConsentIp: dto.lgpdConsentIp,
         lgpdConsentVersion: dto.lgpdConsentVersion,

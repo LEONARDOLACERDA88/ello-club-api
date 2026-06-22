@@ -43,6 +43,9 @@ async function bootstrap() {
     origin: [
       process.env.FRONTEND_URL ?? 'http://localhost:3000',
       'https://ello-club.vercel.app',
+      'https://elloclubmais.com.br',
+      'https://www.elloclubmais.com.br',
+      /^https:\/\/ello-club-.*\.vercel\.app$/,
     ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,

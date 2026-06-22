@@ -162,13 +162,12 @@ export class ClubeCertoService implements OnModuleInit {
       let category = CAT_MAP[est.category?.name] || 'Outros'
       if (category === 'Farmácia e Saúde') category = getHealthSubcategory(est.name)
       const discountNum = parseInt((est.discount || '0').replace(/[^0-9]/g, '')) || 0
-      const affiliateUrl = est.discountLink || est.store || null
-
-      if (!affiliateUrl) continue
+      const affiliateUrl = (est.discountLink || est.store || '').trim() || null
+      // Parceiros físicos (sem link) usam QR_VOUCHER — usuário apresenta CPF no caixa
+      const integrationType = affiliateUrl ? 'AFFILIATE' : 'QR_VOUCHER'
 
       await this.prisma.externalPartner.upsert({
         where: {
-          // Usa externalId+source como chave única
           externalId_source: {
             externalId: String(est.id),
             source: 'clube_certo',
@@ -177,11 +176,11 @@ export class ClubeCertoService implements OnModuleInit {
         create: {
           name: est.name,
           category,
-          description: null,
+          description: integrationType === 'QR_VOUCHER' ? 'Apresente seu CPF no caixa para obter o desconto.' : null,
           logo: est.brand || null,
           image: est.capa || est.brand || null,
           discount: discountNum,
-          integrationType: 'AFFILIATE',
+          integrationType,
           affiliateUrl,
           source: 'clube_certo',
           externalId: String(est.id),

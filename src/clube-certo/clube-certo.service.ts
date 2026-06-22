@@ -161,7 +161,7 @@ export class ClubeCertoService implements OnModuleInit {
     for (const est of establishments) {
       let category = CAT_MAP[est.category?.name] || 'Outros'
       if (category === 'Farmácia e Saúde') category = getHealthSubcategory(est.name)
-      const discountNum = parseInt((est.discount || '0').replace('%', '')) || 0
+      const discountNum = parseInt((est.discount || '0').replace(/[^0-9]/g, '')) || 0
       const affiliateUrl = est.discountLink || est.store || null
 
       if (!affiliateUrl) continue
